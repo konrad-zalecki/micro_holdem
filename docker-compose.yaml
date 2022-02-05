@@ -1,0 +1,31 @@
+version: "3.7"
+
+networks:
+  holdem-network:
+
+services:
+  front:
+    container_name: front-node
+    restart: always
+    build:
+      context: ./front
+    ports:
+      - 2137:2137
+    networks:
+      - holdem-network
+  users:
+    container_name: users-node
+    restart: always
+    build:
+      context: ./users
+    ports:
+      - 6969:6969
+    networks:
+      - holdem-network
+  users-db:
+    container_name: users-db
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    networks:
+      - holdem-network
