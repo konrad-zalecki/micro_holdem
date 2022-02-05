@@ -1,6 +1,8 @@
 from flask import Flask, render_template, jsonify, make_response, request
 import jwt
 import datetime
+from pymongo import MongoClient
+import sys
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 's3cret'
@@ -9,14 +11,32 @@ app.config['SECRET_KEY'] = 's3cret'
 def login():
     username = request.json["username"]
     password = request.json["password"]
-    token = jwt.encode({'user': username, 
-              'exp': datetime.datetime.utcnow() + datetime.timedelta(days=10)},
-              app.config['SECRET_KEY'])
-    return jsonify({'token': token})
+    query = { "username": username, "password": password }
+    client = MongoClient('mongodb://users-db:27017')
+    col = client["users_database"]["users"]
+    matches = col.find(query)
+    if len(list(matches)) > 0:
+        token = jwt.encode({'user': username, 
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=10)},
+                app.config['SECRET_KEY'])
+        return jsonify({'token': token})
+    else:
+        return make_response("Bad password", 400)
 
-@app.route('/register')
+@app.route('/register', methods=['POST'])
 def register():
-    return render_template('register.html')
+    username = request.json["username"]
+    password = request.json["password"]
+    query = { "username": username}
+    client = MongoClient('mongodb://users-db:27017')
+    col = client["users_database"]["users"]
+    matches = col.find(query)
+    print('MATCHES', len(list(matches)), file=sys.stderr)
+    if len(list(matches)) == 0:
+        col.insert_one({"username": username, "password": password})
+        return make_response("OK", 200)
+    else:
+        return make_response("Username not available", 400)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=6969)

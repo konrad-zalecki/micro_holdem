@@ -59,12 +59,26 @@ def login():
         resp = make_response(redirect('/'))
         resp.set_cookie('auth_token', response.json()['token'])
         return resp
-    return render_template('/login')
+    return render_template('login.html', fail_info="Invalid data")
 
-@app.route('/register')
+
+@app.route('/register', methods=['POST', 'GET'])
 @token_prohibited
 def register():
-    return render_template('register.html')
+    if request.method == 'GET':
+        return render_template('register.html')
+    elif request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        response = requests.post(
+            'http://users-node:6969/register',
+            json={'password': password, 'username': username}
+        )
+    if response.status_code == 200:
+        return render_template('register.html', succ_info="Account created")
+    else:
+        return render_template('register.html', fail_info="Username not available")
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=2137)
