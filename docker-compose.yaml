@@ -13,6 +13,15 @@ services:
       - 2137:2137
     networks:
       - holdem-network
+  game-server:
+    container_name: game-node
+    restart: always
+    build:
+      context: ./game_server
+    ports:
+      - 5000:5000
+    networks:
+      - holdem-network
   users:
     container_name: users-node
     restart: always
