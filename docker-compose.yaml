@@ -29,3 +29,19 @@ services:
       - '27017:27017'
     networks:
       - holdem-network
+  relations:
+    container_name: relations-node
+    restart: always
+    build:
+      context: ./relations
+    ports:
+      - 2138:2138
+    networks:
+      - holdem-network
+  users-db:
+    container_name: relations-db
+    image: mongo:latest
+    ports:
+      - '27018:27017'
+    networks:
+      - holdem-network

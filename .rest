@@ -1,7 +1,15 @@
-POST http://10.0.2.15:6969/login
+POST http://172.23.0.5:2138/friendscontent
 Content-Type: application/json
 
 {
-  "username": "wielkiprofesoruwu",
-  "password": "sznurek"
+  "auth_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoia2FrdHVzIiwiZXhwIjoxNjQ1MTI0Nzg5fQ.exE4HswR6nQK5U3UHltSFh13O8G1aPEYSdF5a0PHmvU"
+}
+
+###
+POST http://172.23.0.2:6969/login
+Content-Type: application/json
+
+{
+  "username": "kaktus",
+  "password": "kaktus"
 }
