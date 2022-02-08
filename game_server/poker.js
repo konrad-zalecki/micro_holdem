@@ -1,5 +1,3 @@
-const { table } = require("console")
-
 class Deck {
     constructor() {
         this.cards = []
@@ -9,13 +7,13 @@ class Deck {
     reset() {
         this.cards = []
         const colors = ['h', 'd', 's', 'c']
-        const ranks = ['J', 'D', 'K', 'A']
+        // const ranks = ['J', 'D', 'K', 'A']
         for (let i = 2; i<=14; i++) {
-            var rank = i.toString()
-            if (i > 10)
-                var rank = ranks[i%11]
+            // var rank = i.toString()
+            // if (i > 10)
+            //     var rank = ranks[i%11]
             for (var color of colors)
-                this.cards.push({rank: rank, suit: color})
+                this.cards.push({rank: i, suit: color})
         }
     }
 
@@ -50,12 +48,13 @@ class Deck {
 }
 
 class Player {
-    constructor(name, money) {
+    constructor(name, money, socket) {
         this.name = name;
         this.money = money;
         this.status = ''
         this.pool = 0
         this.hand = []
+        this.socket = socket
     }
 
     bet(stake) {
@@ -74,18 +73,11 @@ class Player {
     reset() {
         this.status = 'playing'
         this.pool = 0
+        // this.hand = []
     }
 
-    get money() {
-        return this.money;
-    }
-
-    get name() {
-        return this.name;
-    }
-
-    get pool() {
-        return this.pool;
+    setStatus(status) {
+        this.status = status
     }
 }
 
@@ -112,11 +104,12 @@ class Table {
         this.secondsPerTurn = secondsPerTurn
     }
 
-    joinPlayer(name) {
+    joinPlayer(name, socket) {
         if (!this.allPlayers.has(name)) {
-            var player = new Player(name, 1000);
+            var player = new Player(name, 1000, socket);
             this.allPlayers.add(player);
         }
+        console.log(name + ' player joined')
     }
 
     updateActivePlayers() {
@@ -132,108 +125,115 @@ class Table {
         this.playerToMove = (this.playerSmallBlind+1)%this.activePlayers.length;
         this.phaseEndingPlayer = this.playerToMove;
         this.playersLeft = this.activePlayers.length;
+        this.phaseMovesCt = 0;
         this.stake = this.bigBlind;
         this.pool = 0;
         this.currentPlayerMoveDesc = '';
-        for(const player in this.activePlayers)
-            player.reset()
+        this.cardsOnTable = []
+        for(const player of this.activePlayers)
+            player.reset();
+        this.deck.reset();
+        this.deck.shuffle();
+    }
+    
+    incPlayerToMove() {
+        this.playerToMove = (this.playerToMove+1)%this.activePlayers.length;
     }
 
-    runDeal() {
-        this.reset()
-        this.paySmallBlind()
-
-        let playersCards = this.deck.deal(this.activePlayers.length)
-        for(let i = 0; i < this.activePlayers.length; i++)
-            this.activePlayers[i].takeCards(playersCards[i])
-
-        this.sendInitialInfoToPlayers();
-
-        // pre-flop
-        this.deck.burnCard()
-        var preFlop = this.deck.dealCards(3);
-        this.betting();
-
-        if (this.playersLeft > 1) {
-            // flop
-            this.cardsOnTable.concat(preFlop);
-            this.betting()
-
-            if (this.playersLeft > 1) {
-                // turn
-                this.deck.burnCard();
-                this.cardsOnTable.push(this.deck.dealCards(1)[0]);
-                this.betting();
-
-                if (this.playersLeft > 1) {
-                    // river
-                    this.deck.burnCard();
-                    this.cardsOnTable.push(this.deck.dealCards(1)[0]);
-                    this.betting();
-                }
-            }
-        }
-
-        concludeResults();
+    incPhaseMovesCt() {
+        this.phaseMovesCt += 1;
     }
 
-    onePlayerBet() {
-        const player = this.activePlayers[this.playerToMove];
-        if (player.money == 0 || player.status == 'folded')
-            return
-        
-        for(let i=0; i<this.secondsPerTurn; i++) {
-            this.sleep(1000)
-            if (this.currentPlayerMoveDesc != '')
-                break;
-        }
-
-        if (this.currentPlayerMoveDesc != '') {
-            this.currentPlayerMoveDesc = '-';
-            this.sendMessageInfoToPlayers('decision', this.currentPlayerMoveDesc);
-        }
-        else {
-            player.setStatus(folded);
-            this.playersLeft -= 1;
-            this.sendMessageInfoToPlayers('decision', 'folded');
-        }
+    resetCurrentPlayerMoveDesc() {
+        this.currentPlayerMoveDesc = '';
     }
 
-    betting() {
-        while(this.phaseMovesCt < this.activePlayers.length) {
-            this.sendUpdateInfoToPlayers();
-            onePlayerBet();
-            this.phaseMovesCt += 1;
-            this.playerToMove = (this.playerToMove+1)%this.activePlayers;
-            this.currentPlayerMoveDesc = '';
-        }
-        this.playerToMove = this.playerSmallBlind;
-        this.sendUpdateInfoToPlayers();
+    setCurrentPlayerMoveDesc(desc) {
+        this.currentPlayerMoveDesc = desc;
+    }
+
+    setPlayerToMove(player) {
+        this.playerToMove = player;
+    }
+
+    decPlayersLeft() {
+        this.playersLeft -= 1;
     }
 
     sendInitialInfoToPlayers() {
-        io.in(tableID).emit(
+        console.log('init info')
+        var players = []
+        for (const player of this.activePlayers) {
+            players.push({
+                name: player.name,
+                money: player.money,
+                pool: player.pool,
+                hand: player.hand,
+                status: player.status
+            })
+        }
+        this.io.in(this.tableID).emit(
             "init-info", 
-            this.playerToMove,
+            players
         );
     }
 
     sendUpdateInfoToPlayers() {
-        io.in(tableID).emit(
-            "init-info", 
-            this.playerToMove,
+        var players = []
+        for (const player of this.activePlayers) {
+            players.push({
+                name: player.name,
+                money: player.money,
+                pool: player.pool,
+                hand: player.hand,
+                status: player.status
+            })
+        }
+        var updateInfoDict = {
+            activePlayers: players,
+            playerToMove: this.playerToMove,
+            cardsOnTable: this.cardsOnTable,
+            pool: this.pool,
+            stake: this.stake
+        }
+        this.io.in(this.tableID).emit(
+            "update-info", 
+            updateInfoDict
+        );
+
+        const player = this.activePlayers[this.playerToMove];
+        player.socket.emit('your-turn')
+        console.log('update info sent')
+    }
+
+    sendFinalInfoToPlayers(name) {
+        this.io.in(this.tableID).emit(
+            "final-info", 
+            name
         );
     }
 
     sendMessageInfoToPlayers(type, info) {
-        io.in(tableID).emit(
+        this.io.in(this.tableID).emit(
             type, 
             info
         );
     }
 
     concludeResults() {
+        var p;
+        var highest = 0;
+        for (const player of this.activePlayers) {
+            let highCard = Math.max(player.hand[0].rank, player.hand[1].rank);
+            if (highCard > highest) {
+                p = player;
+                highest = highCard;
+            }
+            player.reset();
+        }
+        p.win(this.pool);
 
+        this.sendFinalInfoToPlayers(p.name);
     }
 
     playerEqualize(name) {
@@ -262,8 +262,11 @@ class Table {
         if (this.currentPlayerMoveDesc != '')
             return;
         this.currentPlayerMoveDesc = name; // lock
+        const player = this.activePlayers[this.playerToMove];
 
         this.currentPlayerMoveDesc += ' folded';
+        this.decPlayersLeft();
+        player.setStatus('folded')
     }
     
     playerCheck(name) {
@@ -271,17 +274,24 @@ class Table {
             return
         if (this.currentPlayerMoveDesc != '')
             return;
+        const player = this.activePlayers[this.playerToMove];
+
+        if (this.stake > player.pool)
+            return
         this.currentPlayerMoveDesc = name; // lock
 
-        this.currentPlayerMoveDesc += ' folded';
+        this.currentPlayerMoveDesc += ' checked';
     }
 
     playerRaise(name, stake) {
+        console.log('ok')
         if (this.activePlayers[this.playerToMove].name != name)
             return
+        console.log('lol')
         if (this.currentPlayerMoveDesc != '')
             return;
         const player = this.activePlayers[this.playerToMove];
+        console.log(player.pool)
 
         if (player.pool + stake < this.stake)
             return
@@ -308,4 +318,16 @@ class Table {
         while (new Date().getTime() < expire) { }
         return;
     }
+
+    getActivePlayersCt() {
+        return this.activePlayers.length;
+    }
+
+    resetPhase() {
+        this.phaseMovesCt = 0;
+        this.playerToMove = this.playerSmallBlind;
+    }
 }
+
+
+module.exports.Table = Table;
