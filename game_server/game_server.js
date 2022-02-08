@@ -47,6 +47,7 @@ async function runGame(tableID) {
             for(let i = 0; i < table.activePlayers.length; i++)
                 table.activePlayers[i].takeCards(playersCards[i])
 
+            table.sendCardsInfoToPlayers();
             table.sendInitialInfoToPlayers();
             await delay(1000)
 
@@ -84,6 +85,7 @@ async function runGame(tableID) {
             }
 
             table.concludeResults();
+            await delay(3000);
         }
     }
 }
@@ -93,6 +95,7 @@ async function betting(tableID) {
 
     while(table.phaseMovesCt < table.activePlayers.length) {
         table.sendUpdateInfoToPlayers();
+        // Może nie wysyłać jeśli gracz zfoldował? dziwnie wyglada niby
         await delay(1000);
         if (table.playersLeft < 2)
             break
@@ -136,6 +139,7 @@ io.on("connection", socket => {
         socket.join(tableID);
 
         tables[tableID].joinPlayer(username, socket);
+        socket.emit('name-info', username);
     });
 
     socket.on("equalize", function (tableID, authToken) {
@@ -166,6 +170,14 @@ io.on("connection", socket => {
         if (username == null) return;
 
         tables[tableID].playerCheck(username);
+    });
+
+    socket.on("leave", function (tableID, authToken) {
+        const username = isValidToken(authToken);
+        if (username == null) return;
+
+        console.log('leave masno ' + username);
+        tables[tableID].leavePlayer(username);
     });
 })
 

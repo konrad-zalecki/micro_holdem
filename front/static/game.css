@@ -1,0 +1,125 @@
+
+body {
+    margin: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.green {
+    background-color: green;
+}
+
+#table-img-positioner {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#table-img {
+    width: 100%;
+    height: 100%;
+}
+
+#player-info-positioner {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 11vh;
+}
+
+.player-info-box {
+    display: flex;
+    width: 30vh;
+    height: 100%;
+    margin-left: 10px;
+    background-color: yellow;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.info-box {
+    display: flex;
+    width: 30vh;
+    height: 100%;
+    background-color: yellow;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#table-positioner {
+    display: flex;
+    width: 100%;
+    height: 40vh;
+}
+
+#table-cards-pos {
+    display: flex;
+    height:100%;
+    width: calc(50vw - 35vh);
+}
+
+.table-cards-box {
+    display: flex;
+    width: 70vh;
+    height: 100%;
+    align-items: center;
+}
+
+.game-info-box {
+    display: flex;
+    width: calc(50vw - 35vh);
+    height: 100%;
+    background-color: yellow;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#opponent-positioner {
+    margin-top: -100vh;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 20vh;
+    bottom: 0%;
+}
+
+.box {
+    display: flex;
+    width: 30vh;
+    height:100%;
+    margin-left: 10px;
+    justify-content: center;
+}
+
+.hidden {
+    display: none;
+}
+
+#player-positioner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 20vh;
+    bottom: 0%;
+}
+
+.player-box {
+    display: flex;
+    width: 35vh;
+    height:100%;
+    justify-content: center;
+}
+
+.player-buttons-box {
+    display: flex;
+    height: 50%;
+    background-color: black;
+    justify-items: center;
+    align-items: center;
+}

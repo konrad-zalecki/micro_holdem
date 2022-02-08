@@ -6,14 +6,14 @@ class Deck {
 
     reset() {
         this.cards = []
-        const colors = ['h', 'd', 's', 'c']
-        // const ranks = ['J', 'D', 'K', 'A']
+        const colors = ['H', 'D', 'S', 'C']
+        const ranks = ['J', 'Q', 'K', 'A']
         for (let i = 2; i<=14; i++) {
-            // var rank = i.toString()
-            // if (i > 10)
-            //     var rank = ranks[i%11]
+            var rank = i.toString()
+            if (i > 10)
+                rank = ranks[i%11]
             for (var color of colors)
-                this.cards.push({rank: i, suit: color})
+                this.cards.push({rank: rank, suit: color})
         }
     }
 
@@ -86,6 +86,7 @@ class Table {
         this.tableID = tableID;
         this.playerMap = {};
         this.allPlayers = new Set();
+        this.playersToLeave = new Set();
         this.activePlayers = [];
         this.deck = new Deck();
         this.io = io;
@@ -107,14 +108,40 @@ class Table {
     joinPlayer(name, socket) {
         if (!this.allPlayers.has(name)) {
             var player = new Player(name, 1000, socket);
-            this.allPlayers.add(player);
+            this.allPlayers.add(name);
+            this.playerMap[name] = player
+        }
+        else {
+            this.playersToLeave.delete(name);
+            this.playerMap[name].socket = socket;
         }
         console.log(name + ' player joined')
     }
 
+    leavePlayer(name) {
+        if (this.allPlayers.has(name)) {
+            this.playersToLeave.add(name);
+        }
+    }
+
+    payoutPlayer(player) {
+        console.log('PAYOUT TIME BBY ' + player)
+        return;
+    }
+
     updateActivePlayers() {
+        // lock needed
+        for(var name of this.playersToLeave) {
+            this.allPlayers.delete(name);
+            var player = this.playerMap[name];
+            this.payoutPlayer(player);
+            delete this.playerMap[name];
+        }
+        this.playersToLeave.clear();
+
         this.activePlayers = [];
-        for(const player of this.allPlayers) {
+        for(const name of this.allPlayers) {
+            var player = this.playerMap[name];
             if (player.money >= this.bigBlind)
                 this.activePlayers.push(player);
         }
@@ -160,6 +187,13 @@ class Table {
         this.playersLeft -= 1;
     }
 
+    sendCardsInfoToPlayers() {
+        for (const player of this.activePlayers) {
+            player.socket.emit('cards-info', player.hand);
+        }
+        console.log("cards info sent");
+    }
+
     sendInitialInfoToPlayers() {
         console.log('init info')
         var players = []
@@ -201,14 +235,22 @@ class Table {
             updateInfoDict
         );
 
-        const player = this.activePlayers[this.playerToMove];
-        player.socket.emit('your-turn')
-        console.log('update info sent')
+        // const player = this.activePlayers[this.playerToMove];
+        // player.socket.emit('your-turn')
+        // console.log('update info sent')
     }
 
     sendFinalInfoToPlayers(name) {
+        var players = []
+        for (const player of this.activePlayers) {
+            players.push({
+                name: player.name,
+                hand: player.hand,
+            })
+        }
         this.io.in(this.tableID).emit(
             "final-info", 
+            players,
             name
         );
     }
@@ -221,7 +263,7 @@ class Table {
     }
 
     concludeResults() {
-        var p;
+        var p = this.activePlayers[0];
         var highest = 0;
         for (const player of this.activePlayers) {
             let highCard = Math.max(player.hand[0].rank, player.hand[1].rank);
@@ -232,6 +274,7 @@ class Table {
             player.reset();
         }
         p.win(this.pool);
+        console.log("final info")
 
         this.sendFinalInfoToPlayers(p.name);
     }
