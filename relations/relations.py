@@ -33,7 +33,7 @@ def login():
     sender_username = get_auth_username(request)
     if not sender_username:
         return make_response('fail', 400)
-    client = MongoClient('mongodb://relations-db:27018')
+    client = MongoClient('mongodb://relations-db:27017')
     col = client["relations_database"]["invitations"]
     create_invite(sender_username, request.json["to"])
     return make_response(sender_username, 200)

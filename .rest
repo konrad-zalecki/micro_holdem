@@ -1,15 +1,16 @@
-POST http://172.23.0.5:2138/friendscontent
+POST http://0.0.0.0:2139/get-balance
 Content-Type: application/json
 
 {
-  "auth_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoia2FrdHVzIiwiZXhwIjoxNjQ1MTI0Nzg5fQ.exE4HswR6nQK5U3UHltSFh13O8G1aPEYSdF5a0PHmvU"
+  "amount": 72,
+  "auth_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiZGljayIsImV4cCI6MTY0NTE5NjY2Nn0.fd3V0n8P_Not9lL0UwGxqj75ZIxytVmLzxbiNpcDPOI"
 }
 
 ###
-POST http://172.23.0.2:6969/login
+POST http://0.0.0.0:6969/login
 Content-Type: application/json
 
 {
-  "username": "kaktus",
-  "password": "kaktus"
+  "username": "dick",
+  "password": "dick"
 }

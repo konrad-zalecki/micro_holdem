@@ -13,6 +13,15 @@ services:
       - 2137:2137
     networks:
       - holdem-network
+  front2:
+    container_name: front2-node
+    restart: always
+    build:
+      context: ./front2
+    ports:
+      - 2140:2140
+    networks:
+      - holdem-network
   users:
     container_name: users-node
     restart: always
@@ -38,10 +47,33 @@ services:
       - 2138:2138
     networks:
       - holdem-network
-  users-db:
+  relations-db:
     container_name: relations-db
     image: mongo:latest
     ports:
       - '27018:27017'
     networks:
       - holdem-network
+  accounts:
+    container_name: accounts-node
+    restart: always
+    build:
+      context: ./accounts
+    ports:
+      - 2139:2139
+    networks:
+      - holdem-network
+  accounts-db:
+    container_name: accounts-db
+    image: mongo:latest
+    ports:
+      - '27019:27017'
+    networks:
+      - holdem-network
+  nginx:
+    build: ./balancing
+    ports:
+      - "8080:80"
+    depends_on:
+      - front
+      - front2
