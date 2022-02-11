@@ -123,3 +123,12 @@ body {
     justify-items: center;
     align-items: center;
 }
+
+.time-box {
+    display: flex;
+    height: 50%;
+    background-color: yellow;
+    justify-content: center;
+    align-items: center;
+    width: 10vh;
+}

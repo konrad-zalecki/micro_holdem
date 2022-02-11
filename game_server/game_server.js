@@ -97,7 +97,7 @@ async function betting(tableID) {
     const table = tables[tableID]
 
     while(table.phaseMovesCt < table.activePlayers.length) {
-        table.sendUpdateInfoToPlayers();
+        table.sendUpdateInfoToPlayers(table.secondsPerTurn+1);
         // Może nie wysyłać jeśli gracz zfoldował? dziwnie wyglada niby
         await delay(1000);
         if (table.playersLeft < 2)
@@ -106,9 +106,10 @@ async function betting(tableID) {
         // one player bet
         const player = table.activePlayers[table.playerToMove];
         if (player.money != 0 && player.status != 'folded') {
-            for(let i=0; i<table.secondsPerTurn; i++) {
-                table.sendUpdateInfoToPlayers(); // nsew
-                await delay(1000);
+            for(let i=0; i<table.secondsPerTurn*10; i++) {
+                if (i%10 == 0)
+                    table.sendUpdateInfoToPlayers(table.secondsPerTurn-i/10); // new
+                await delay(100);
 
                 console.log('sekunda masna')
                 if (table.currentPlayerMoveDesc != '')
@@ -132,7 +133,7 @@ async function betting(tableID) {
         table.incPhaseMovesCt();
         table.incPlayerToMove();
         table.resetCurrentPlayerMoveDesc();
-        table.sendUpdateInfoToPlayers(); // new
+        table.sendUpdateInfoToPlayers(0); // new
     }
     table.resetPhase();
 }
