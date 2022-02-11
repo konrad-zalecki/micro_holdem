@@ -13,15 +13,6 @@ services:
       - 2137:2137
     networks:
       - holdem-network
-  front2:
-    container_name: front2-node
-    restart: always
-    build:
-      context: ./front2
-    ports:
-      - 2140:2140
-    networks:
-      - holdem-network
   users:
     container_name: users-node
     restart: always
@@ -70,10 +61,3 @@ services:
       - '27019:27017'
     networks:
       - holdem-network
-  nginx:
-    build: ./balancing
-    ports:
-      - "8080:80"
-    depends_on:
-      - front
-      - front2
