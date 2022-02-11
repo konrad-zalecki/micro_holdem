@@ -13,6 +13,24 @@ services:
       - 2137:2137
     networks:
       - holdem-network
+  game-server:
+    container_name: game-node
+    restart: always
+    build:
+      context: ./game_server
+    ports:
+      - 5000:5000
+    networks:
+      - holdem-network
+  matchmaking:
+    container_name: matchmaking
+    restart: always
+    build:
+      context: ./matchmaking
+    ports:
+      - 4200:4200
+    networks:
+      - holdem-network
   users:
     container_name: users-node
     restart: always
@@ -27,5 +45,37 @@ services:
     image: mongo:latest
     ports:
       - '27017:27017'
+    networks:
+      - holdem-network
+  relations:
+    container_name: relations-node
+    restart: always
+    build:
+      context: ./relations
+    ports:
+      - 2138:2138
+    networks:
+      - holdem-network
+  relations-db:
+    container_name: relations-db
+    image: mongo:latest
+    ports:
+      - '27018:27017'
+    networks:
+      - holdem-network
+  accounts:
+    container_name: accounts-node
+    restart: always
+    build:
+      context: ./accounts
+    ports:
+      - 2139:2139
+    networks:
+      - holdem-network
+  accounts-db:
+    container_name: accounts-db
+    image: mongo:latest
+    ports:
+      - '27019:27017'
     networks:
       - holdem-network
