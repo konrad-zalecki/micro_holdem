@@ -12,7 +12,7 @@ def login():
     username = request.json["username"]
     password = request.json["password"]
     query = { "username": username, "password": password }
-    client = MongoClient('mongodb://users-db:27017')
+    client = MongoClient('mongodb://users-db:27017,users-db-2:27017/?replicaSet=rs0')
     col = client["users_database"]["users"]
     matches = col.find(query)
     if len(list(matches)) > 0:
@@ -28,7 +28,7 @@ def register():
     username = request.json["username"]
     password = request.json["password"]
     query = { "username": username}
-    client = MongoClient('mongodb://users-db:27017')
+    client = MongoClient('mongodb://users-db:27017,users-db-2:27017/?replicaSet=rs0')
     col = client["users_database"]["users"]
     matches = col.find(query)
     print('MATCHES', len(list(matches)), file=sys.stderr)

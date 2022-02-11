@@ -4,17 +4,43 @@ import requests
 import sys
 import jwt
 from functools import wraps
+import redis
 
 app = Flask(__name__)
 
 
 app.config['SECRET_KEY'] = 's3cret'
 
+def get_cached_balance(key):
+    rc = redis.Redis(host='redis-cache', port=6379, db=0)
+    val = rc.get(key)
+    return None if val is None else val.decode('ascii')
+
+def set_cached_balance(key, value):
+    rc = redis.Redis(host='redis-cache', port=6379, db=0)
+    rc.set(key, value)
+
+def get_cached_daily(key):
+    rc = redis.Redis(host='redis-cache', port=6379, db=1)
+    val = rc.get(key)
+    return None if val is None else val.decode('ascii')
+
+def set_cached_daily(key, value):
+    rc = redis.Redis(host='redis-cache', port=6379, db=1)
+    rc.set(key, value)
+
 def get_balance(user):
+    cached_balance = get_cached_balance(user)
+    if cached_balance is not None:
+        print('Found cached balance for user ' + user, file=sys.stderr)
+        return cached_balance
     resp = requests.post(
             'http://accounts-node:2139/get-balance',
             json={"user": user})
-    return resp.json()["balance"]
+    print('No cached balance for user ' + user + ", http request sent", file=sys.stderr)
+    balance =  resp.json()["balance"]
+    set_cached_balance(user, str(balance))
+    return balance
 
 def get_username(request):
     token = request.cookies.get('auth_token')
@@ -35,9 +61,9 @@ def token_required(f):
             return redirect('/login')
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-            check_daily(data["user"])
         except:
             return 'Invalid token'
+        check_daily(data["user"])
         return f(*args, **kwargs)
     return decorated
 

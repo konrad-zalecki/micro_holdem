@@ -1,9 +1,9 @@
-from fnmatch import translate
 from flask import Flask, render_template, jsonify, make_response, request
 import jwt
 import datetime
 from pymongo import MongoClient
 import sys
+import redis
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -11,6 +11,12 @@ app.config['SECRET_KEY'] = 's3cret'
 
 DAILY_BONUS = 50
 NEW_ACCOUNT_BALANCE = 1000
+
+def update_balance_if_cached(key, value):
+    rc = redis.Redis(host='redis-cache', port=6379, db=0)
+    val = rc.get(key)
+    if val is not None:
+        rc.set(key, value)
 
 def get_auth_username(request):
     try:
@@ -59,7 +65,9 @@ def try_getting_amount(user, amount):
     if cur_balance < amount:
         return (False, 'insufficient funds')
     myquery = { "username": user }
-    newvalues = { "$set": { "balance": cur_balance - amount } }
+    new_balance = cur_balance - amount
+    newvalues = { "$set": { "balance": new_balance } }
+    update_balance_if_cached(user, new_balance)
     col.update_one(myquery, newvalues)
     return (True, 'OK')
 
@@ -70,7 +78,9 @@ def add_amount(user, amount):
         return False
     cur_balance = get_user_balance(user)
     myquery = { "username": user }
-    newvalues = { "$set": { "balance": cur_balance + amount } }
+    new_balance = cur_balance + amount
+    newvalues = { "$set": { "balance": new_balance } }
+    update_balance_if_cached(user, new_balance)
     col.update_one(myquery, newvalues)
     return True
 
@@ -160,7 +170,7 @@ def received_daily(user):
         myquery = { "username": user }
         newvalues = { "$set": { "last": datetime.now() } }
         col.update_one(myquery, newvalues)
-    return result
+    return
 
 @app.route('/daily', methods=["POST"])
 def check_daily():
