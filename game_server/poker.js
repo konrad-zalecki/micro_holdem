@@ -319,7 +319,7 @@ class Table {
         );
     }
 
-    sendUpdateInfoToPlayers() {
+    sendUpdateInfoToPlayers(time=0) {
         var players = []
         for (const player of this.activePlayers) {
             players.push({
@@ -335,7 +335,8 @@ class Table {
             playerToMove: this.playerToMove,
             cardsOnTable: this.cardsOnTable,
             pool: this.pool,
-            stake: this.stake
+            stake: this.stake,
+            time: time
         }
         this.io.in(this.tableID).emit(
             "update-info", 

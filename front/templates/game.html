@@ -181,7 +181,7 @@ $(document).ready(function() {
         tableInfo(updateInfoDict.cardsOnTable, updateInfoDict.pool, updateInfoDict.stake)
         playersInfo(players);
         playerToMoveInfo(players, updateInfoDict.playerToMove);
-        
+        $("#time").html(updateInfoDict.time)
 	});
     socket.on('decision-info', function(info) {
         // alert('update')
@@ -341,6 +341,9 @@ $(document).ready(function() {
             <button id="leaveButton">Leave</button>
             <!-- <ul id="messages"></ul>
             <div id="decision"></div> -->
+        </div>
+        <div id="time" class="time-box">
+            13224
         </div>
     </div>
 </div>
