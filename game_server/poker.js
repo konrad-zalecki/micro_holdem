@@ -1,3 +1,5 @@
+const { monitorEventLoopDelay } = require("perf_hooks")
+
 class Deck {
     constructor() {
         this.cards = []
@@ -13,7 +15,7 @@ class Deck {
             if (i > 10)
                 rank = ranks[i%11]
             for (var color of colors)
-                this.cards.push({rank: rank, suit: color})
+                this.cards.push({rank: rank, suit: color, val: i})
         }
     }
 
@@ -44,6 +46,111 @@ class Deck {
 
     burnCard() {
         this.cards.pop()
+    }
+
+    static checkRF(cards) {
+        if (!Deck.checkST(cards))
+            return false;
+        if (!Deck.checkFL(cards))
+            return false;
+        return true;
+    }
+
+    static checkFOAK(cards) {
+        if (cards[0].val == cards[3].val || cards[1].val == cards[4].val)
+            return true;
+        return false;
+    }
+
+    static checkFH(cards) {
+        if (cards[0].val == cards[1].val && cards[2].val == cards[4].val)
+            return true;
+        if (cards[0].val == cards[2].val && cards[3].val == cards[4].val)
+            return true;
+        return false;
+    }
+
+    static checkFL(cards) {
+        for (let i=1; i<5; i++) {
+            if (cards[i].suit != cards[i-1].suit)
+                return false;
+        }
+        return true;
+    }
+
+    static checkST(cards) {
+        let cond = true;
+        for (let i=1; i<4; i++) {
+            if (cards[i].val != cards[i-1].val+1)
+                cond = false;
+        }
+        if (!cond)
+            return false;
+        
+        if (cards[4].val == cards[3].val+1)
+            return true;
+        if (cards[4].val == 14 && cards[0].val == 2)
+            return true;
+        return false;
+    }  
+
+    static checkTOAK(cards) {
+        for (let i=0; i<3; i++) {
+            if (cards[i].val == cards[i+2].val)
+                return true;
+        }
+        return false;
+    }
+
+    static checkTP(cards) {
+        if (cards[0].val == cards[1].val && cards[2].val == cards[3].val)
+            return true;
+        if (cards[0].val == cards[1].val && cards[3].val == cards[4].val)
+            return true;
+        if (cards[1].val == cards[2].val && cards[3].val == cards[4].val)
+            return true;
+        return false;
+    }
+
+    static checkPR(cards) {
+        for (let i=0; i<4; i++) {
+            if (cards[i].val == cards[i+1].val)
+                return true;
+        }
+        return false;
+    }
+
+    static getCardsVal(cards) {
+        var val = "";
+        for (let i=4; i>=0; i--) {
+            let x = cards[i].val.toString();
+            if (x.length == 1)
+                x = '0'+x;
+            val += x;
+        }
+        return val;
+    }
+
+    static getCardsValST(cards) {
+        if (cards[0].val == 2 && cards[4].val == 14)
+            return '0504030201';
+        return Deck.getCardsVal(cards);
+    }
+
+    static getFigure(cards) {
+        var val = "";
+        for (let i=0; i<5; i++) {
+            val += cards[i].rank + cards[i].suit;
+            if (i != 4)
+                val += ',';
+        }
+        return val;
+    }
+
+    static getFigureST(cards) {
+        if (cards[0].val == 2 && cards[4].val == 14)
+            cards = [cards[4]].concat(cards.slice(0, 4));
+        return Deck.getFigure(cards);
     }
 }
 
@@ -240,7 +347,7 @@ class Table {
         // console.log('update info sent')
     }
 
-    sendFinalInfoToPlayers(name) {
+    sendFinalInfoToPlayers(figureMap, earningsMap) {
         var players = []
         for (const player of this.activePlayers) {
             players.push({
@@ -248,10 +355,21 @@ class Table {
                 hand: player.hand,
             })
         }
+
+        var winInfo = []
+        for (const player of this.activePlayers) {
+            if (earningsMap[player.name] > 0) {
+                winInfo.push({
+                    info: "player " + player.name + " won " + earningsMap[player.name].toString(),
+                    cards: figureMap[player.name].split(',')
+                });
+            }
+        }
+
         this.io.in(this.tableID).emit(
             "final-info", 
             players,
-            name
+            winInfo
         );
     }
 
@@ -262,21 +380,136 @@ class Table {
         );
     }
 
-    concludeResults() {
-        var p = this.activePlayers[0];
-        var highest = 0;
-        for (const player of this.activePlayers) {
-            let highCard = Math.max(player.hand[0].rank, player.hand[1].rank);
-            if (highCard > highest) {
-                p = player;
-                highest = highCard;
-            }
-            player.reset();
+    calculateBestFigure(player) {
+        // returns [val, cards, player]
+        // return [1, 'AS', player];
+        if (this.cardsOnTable.length < 5) {
+            return [1, '', player];
         }
-        p.win(this.pool);
-        console.log("final info")
 
-        this.sendFinalInfoToPlayers(p.name);
+        var allCards = player.hand.concat(this.cardsOnTable)
+        var bestFigureVal = 0;
+        var bestFigure = ''
+        for (let i1=0; i1<7; i1++) {
+            for (let i2=i1+1; i2<7; i2++) {
+                let t = []
+                for (let i=0; i<7; i++) {
+                    if (i != i1 && i != i2)
+                        t.push(allCards[i])
+                }
+                t = t.sort(function(a,b) {
+                    return a.val - b.val;
+                });
+                let cardsVal = '';
+                let figure = ''
+                if (Deck.checkRF(t))
+                    cardsVal = '8';
+                else if (Deck.checkFOAK(t))
+                    cardsVal = '7';
+                else if (Deck.checkFH(t))
+                    cardsVal = '6';
+                else if (Deck.checkFL(t))
+                    cardsVal = '5';
+                else if (Deck.checkST(t))
+                    cardsVal = '4';
+                else if (Deck.checkTOAK(t))
+                    cardsVal = '3';
+                else if (Deck.checkTP(t))
+                    cardsVal = '2';
+                else if (Deck.checkPR(t))
+                    cardsVal = '1';
+                else
+                    cardsVal = '0';
+
+                if (cardsVal == '8' || cardsVal == '4') {
+                    cardsVal += Deck.getCardsValST(t)
+                    figure = Deck.getFigureST(t)
+                }
+                else {
+                    cardsVal += Deck.getCardsVal(t)
+                    figure = Deck.getFigure(t)
+                }
+
+                cardsVal = parseInt(cardsVal, 10);
+                if (cardsVal > bestFigureVal) {
+                    bestFigureVal = cardsVal;
+                    bestFigure = figure;
+                }
+            }
+        }
+        return [bestFigureVal, bestFigure, player]
+    }
+
+    concludeResults() {
+        var figures = []
+        for (const player of this.activePlayers) {
+            if (player.status != 'folded') {
+                figures.push(this.calculateBestFigure(player))
+            }
+        }
+        figures = figures.sort(function(a,b) {
+            return b[0] - a[0];
+        });
+        console.log(figures);
+
+        // playerName -> figure
+        var figureMap = {}
+        // playerName -> win
+        var earningsMap = {}
+        for (const player of this.activePlayers)
+            earningsMap[player.name] = 0;
+
+        for (const figure of figures) 
+            figureMap[figure[2].name] = figure[1];
+
+        var stakePaid = 0;
+        while (figures.length > 0 && stakePaid < this.stake) {
+            console.log('figures')
+            console.log(figures)
+            // get all players having current best figure
+            let i = 1;
+            while (i < figures.length && figures[i][0] == figures[0][0])
+                i += 1;
+            let curPlayers = []
+            for (let j=0; j<i; j++)
+                curPlayers.push([figures[j][2].pool, figures[j][2]])
+            figures = figures.slice(i)
+            
+            // sort players having current best figure by pool
+            curPlayers = curPlayers.sort(function(a,b) {
+                return a[0] - b[0];
+            });
+            console.log('cur players:')
+            console.log(curPlayers);
+
+            // pay each player
+            let cur = 0;
+            for (const winner of curPlayers) {
+                // if there is anything to win
+                if (winner[0] > stakePaid) {
+                    let poolToWin = winner[0] - stakePaid;
+                    console.log(poolToWin)
+                    let curPlayer = winner[1];
+                    let money = 0;
+                    for (const player of this.activePlayers) {
+                        let moneyLeft = player.pool - stakePaid;
+                        if (moneyLeft > 0)
+                            money += Math.min(moneyLeft, poolToWin);
+                    }
+                    console.log("money:")
+                    console.log(money)
+                    for (let j=cur; j<curPlayers.length; j++) {
+                        let curWin = money/(curPlayers.length - cur);
+                        curPlayers[j][1].win(curWin);
+                        earningsMap[curPlayers[j][1].name] += curWin;
+                    }
+                    cur +=  1
+                    stakePaid = winner[0];
+                }
+            }
+        }
+
+        this.sendFinalInfoToPlayers(figureMap, earningsMap);
     }
 
     playerEqualize(name) {
