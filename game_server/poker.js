@@ -149,7 +149,7 @@ class Table {
 
     reset() {
         this.playerSmallBlind = (this.playerSmallBlind+1)%this.activePlayers.length;
-        this.playerToMove = (this.playerSmallBlind+1)%this.activePlayers.length;
+        this.playerToMove = (this.playerSmallBlind+2)%this.activePlayers.length;
         this.phaseEndingPlayer = this.playerToMove;
         this.playersLeft = this.activePlayers.length;
         this.phaseMovesCt = 0;
@@ -350,10 +350,10 @@ class Table {
         this.currentPlayerMoveDesc += ' raised';
     }
 
-    paySmallBlind() {
-        const player = this.activePlayers[this.playerSmallBlind];
-        player.bet(this.smallBlind);
-        this.pool += this.smallBlind;
+    paySmallAndBigBlind() {
+        this.activePlayers[this.playerSmallBlind].bet(this.smallBlind);
+        this.activePlayers[(this.playerSmallBlind+1)%this.activePlayers.length].bet(this.bigBlind);
+        this.pool += this.smallBlind + this.bigBlind;
     }
 
     sleep(ms) {

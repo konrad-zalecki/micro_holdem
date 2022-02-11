@@ -26,6 +26,9 @@ const io = socket(server, {
     }
 });
 
+var publicGamesIDs = []
+var privateGamesIDs = []
+
 const tables = {};
 
 async function runGame(tableID) {
@@ -41,7 +44,7 @@ async function runGame(tableID) {
 
         if (table.getActivePlayersCt() >= 2) {
             table.reset()
-            table.paySmallBlind()
+            table.paySmallAndBigBlind()
 
             let playersCards = table.deck.deal(table.activePlayers.length)
             for(let i = 0; i < table.activePlayers.length; i++)
@@ -85,7 +88,7 @@ async function runGame(tableID) {
             }
 
             table.concludeResults();
-            await delay(3000);
+            await delay(6000);
         }
     }
 }
@@ -104,7 +107,9 @@ async function betting(tableID) {
         const player = table.activePlayers[table.playerToMove];
         if (player.money != 0 && player.status != 'folded') {
             for(let i=0; i<table.secondsPerTurn; i++) {
+                table.sendUpdateInfoToPlayers(); // nsew
                 await delay(1000);
+
                 console.log('sekunda masna')
                 if (table.currentPlayerMoveDesc != '')
                     break;
@@ -127,6 +132,7 @@ async function betting(tableID) {
         table.incPhaseMovesCt();
         table.incPlayerToMove();
         table.resetCurrentPlayerMoveDesc();
+        table.sendUpdateInfoToPlayers(); // new
     }
     table.resetPhase();
 }
@@ -135,7 +141,10 @@ io.on("connection", socket => {
     socket.on("join-game", function (tableID, authToken) {
         const username = isValidToken(authToken);
         if (username == null) return;
-
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
         socket.join(tableID);
 
         tables[tableID].joinPlayer(username, socket);
@@ -145,6 +154,10 @@ io.on("connection", socket => {
     socket.on("equalize", function (tableID, authToken) {
         const username = isValidToken(authToken);
         if (username == null) return;
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
 
         tables[tableID].playerEqualize(username);
     });
@@ -153,6 +166,10 @@ io.on("connection", socket => {
         console.log('raise')
         const username = isValidToken(authToken);
         if (username == null) return;
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
 
         console.log(stake)
         tables[tableID].playerRaise(username, stake);
@@ -161,6 +178,10 @@ io.on("connection", socket => {
     socket.on("fold", function (tableID, authToken) {
         const username = isValidToken(authToken);
         if (username == null) return;
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
 
         tables[tableID].playerFold(username);
     });
@@ -168,6 +189,10 @@ io.on("connection", socket => {
     socket.on("check", function (tableID, authToken) {
         const username = isValidToken(authToken);
         if (username == null) return;
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
 
         tables[tableID].playerCheck(username);
     });
@@ -175,6 +200,10 @@ io.on("connection", socket => {
     socket.on("leave", function (tableID, authToken) {
         const username = isValidToken(authToken);
         if (username == null) return;
+        if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
+            socket.emit('wrong-game-id');
+            return;
+        }
 
         console.log('leave masno ' + username);
         tables[tableID].leavePlayer(username);
@@ -194,8 +223,44 @@ function isValidToken(token) {
     });
 }
 
-runGame(1);
+// runGame(1);
+
+// -------------------------------------------------
+
+
+app.get('/get-ongoing-games', async (req, res) => {
+    console.log('podaję gierki')
+    var gamesInfo = []
+    for (id of publicGamesIDs) {
+        gamesInfo.push({
+            gameID: id,
+            playersCt: tables[id].allPlayers.size,
+            playerNames: Array.from(tables[id].allPlayers)
+        });
+    }
+    var gamesInfoJson = JSON.stringify(gamesInfo);
+    res.json(gamesInfoJson);
+});
+
+
+app.get('/create-new-game', async (req, res) => {
+    console.log('bomba giera jest tworzona tak o')
+    newID = publicGamesIDs.length + 1
+    var game = {
+        gameID: newID,
+        playersCt: 0,
+        playerNames: []
+    };
+
+    runGame(newID);
+    publicGamesIDs.push(newID);
+
+    const gameJson = JSON.stringify(game);
+    res.json(gameJson);
+});
+
+
 
 server.listen(PORT, function() {
-    console.log('listening on *:5000');
+    console.log('listening on *:xxxx');
 });

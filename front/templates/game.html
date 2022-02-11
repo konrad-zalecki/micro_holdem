@@ -25,11 +25,16 @@ $(document).ready(function() {
         }
     }
 
-    function generateCardsHtml(cards, compact = true) {
+    function generateCardsHtml(cards, compact=true, small=false) {
+        var cardsHtml = "<div class='hand"
+
         if (compact)
-            var cardsHtml = "<div class='hand hhand-compact active-hand'>"
-        else
-            var cardsHtml = "<div class='hand'>"
+            cardsHtml += " hhand-compact active-hand"
+        if (small) {
+            cardsHtml += "hhand-small"
+        }
+            
+        cardsHtml += "'>"
 
         for (const card of cards) {
             c = card.rank + card.suit
@@ -99,11 +104,14 @@ $(document).ready(function() {
         for(let i=1; i<=5; i++) {
             let num = i.toString();
             $("#player"+num+"rev").addClass("hidden")
+            $("#player"+num+"rev").removeClass("green")
             $("#player"+num+"info").addClass("hidden")
             $("#player"+num+"info").html("")
             $("#player"+num).addClass("hidden")
             $("#player"+num).html("")
         }
+        $("#table-cards").html("")
+        $("#player-hand").removeClass("green")
         playersInfo(players);
     } 
 
@@ -127,6 +135,12 @@ $(document).ready(function() {
                 }
 
                 ct += 1
+            }
+            else {
+                $("#player-hand").removeClass("green")
+                if (myName == winner) {
+                    $("#player-info").append("<div>WINNER!!!</div>")
+                }
             }
         }
     }
@@ -174,6 +188,13 @@ $(document).ready(function() {
     socket.on('your-turn', function() {
         // $("#messages").append('<li> YOUR TURN BYQ </li>')
     });
+
+    socket.on('wrong-game-id', function() {
+        alert('wrong game id')
+        window.location.href = '/';
+    });
+
+
 
     $('#equalizeButton').on('click', function() {
 		socket.emit('equalize', 1, token);

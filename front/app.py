@@ -4,6 +4,7 @@ import requests
 import sys
 import jwt
 from functools import wraps
+import json
 
 app = Flask(__name__)
 
@@ -80,10 +81,23 @@ def register():
         return render_template('register.html', fail_info="Username not available")
 
 
-@app.route('/game')
+@app.route('/game/<num>')
 @token_required
-def game():
-    return render_template('game.html')
+def game(num):
+    return render_template('game.html', table=num)
+
+
+@app.route('/tables')
+@token_required
+def tables():
+    response = requests.post(
+        'http://matchmaking:4200/get-ongoing-games',
+    )
+    if response.status_code == 200:
+        return render_template('tables.html', games=response.json())
+    else:
+        return render_template('tables.html', games=[])
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=2137)

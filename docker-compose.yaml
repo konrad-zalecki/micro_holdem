@@ -31,6 +31,15 @@ services:
       - 6969:6969
     networks:
       - holdem-network
+  matchmaking:
+    container_name: matchmaking
+    restart: always
+    build:
+      context: ./matchmaking
+    ports:
+      - 4200:4200
+    networks:
+      - holdem-network
   users-db:
     container_name: users-db
     image: mongo:latest
