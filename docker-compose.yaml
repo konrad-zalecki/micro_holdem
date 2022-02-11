@@ -43,8 +43,34 @@ services:
   users-db:
     container_name: users-db
     image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
     ports:
       - '27017:27017'
+    networks:
+      - holdem-network
+  users-db-2:
+    container_name: users-db-2
+    image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
+    ports:
+      - '27030:27017'
+    networks:
+      - holdem-network
+  users-db-3:
+    container_name: users-db-3
+    image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
+    ports:
+      - '27040:27017'
     networks:
       - holdem-network
   relations:
@@ -77,5 +103,12 @@ services:
     image: mongo:latest
     ports:
       - '27019:27017'
+    networks:
+      - holdem-network
+  redis:
+    container_name: redis-cache
+    image: "redis:alpine"
+    ports:
+     - "6379:6379"
     networks:
       - holdem-network
