@@ -13,14 +13,11 @@
 <body>
     {% include 'topbar.html' %}
     <div id="content">
-        {% for game in games %}
-            <a href="/game/{{game.gameID}}"><div>
-                {{game.gameID}}
-                {% for name in game.playerNames %}
-                    {{name}}
-                {% endfor %}
-            </div></a>
+        <h1>Last 30 days</h1>
+        {% for des in tr %}
+        <h2>{{ des }}</h2>
         {% endfor %}
     </div>
+    
 </body>
 </html>

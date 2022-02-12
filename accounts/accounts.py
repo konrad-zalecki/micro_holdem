@@ -102,20 +102,19 @@ def get_balance():
 
 @app.route('/get-coins', methods=["POST"])
 def get_coins_for_game():
-    sender_username = get_auth_username(request)
-    if not sender_username:
-        return make_response('fail', 400)
-    success, message = try_getting_amount(sender_username, request.json["amount"])
+    # sender_username = get_auth_username(request)
+    # if not sender_username:
+    #     return make_response('fail', 400)
+    success, message = try_getting_amount(request.json["user"], request.json["amount"])
     if success:
         return make_response(message, 200)
     return make_response(message, 400)
 
 @app.route('/add-coins', methods=["POST"])
 def return_coins_after_game():
-    sender_username = get_auth_username(request)
-    if not sender_username:
-        return make_response('fail', 400)
-    if add_amount(sender_username, request.json["amount"]):
+    print('abba ojcze', file=sys.stderr)
+    print(request.json, file=sys.stderr)
+    if add_amount(request.json['user'], request.json["amount"]):
         return make_response('OK', 200)
     make_response('adding balance failed', 400)
 
@@ -160,6 +159,10 @@ def get_transactions():
     transactions = get_user_transactions(user)
     return jsonify(transactions)
 
+def set_cached_daily(key, value):
+    rc = redis.Redis(host='redis-cache', port=6379, db=1)
+    rc.set(key, value)
+
 def received_daily(user):
     client = MongoClient('mongodb://accounts-db:27017')
     col = client["accounts_database"]["daily"]
@@ -170,7 +173,7 @@ def received_daily(user):
         myquery = { "username": user }
         newvalues = { "$set": { "last": datetime.now() } }
         col.update_one(myquery, newvalues)
-    return
+    return result
 
 @app.route('/daily', methods=["POST"])
 def check_daily():
@@ -178,6 +181,7 @@ def check_daily():
     if received_daily(user):
         add_amount(user, DAILY_BONUS)
         save_transaction('DAILY BONUS', user, DAILY_BONUS, datetime.now())
+    set_cached_daily(user, 'Y')
     return make_response("OK", 200)
 
 

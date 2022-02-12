@@ -212,9 +212,9 @@ class Table {
         this.secondsPerTurn = secondsPerTurn
     }
 
-    joinPlayer(name, socket) {
+    joinPlayer(name, socket, buyIn) {
         if (!this.allPlayers.has(name)) {
-            var player = new Player(name, 1000, socket);
+            var player = new Player(name, buyIn, socket);
             this.allPlayers.add(name);
             this.playerMap[name] = player
         }
@@ -231,17 +231,13 @@ class Table {
         }
     }
 
-    payoutPlayer(player) {
-        console.log('PAYOUT TIME BBY ' + player)
-        return;
-    }
-
     updateActivePlayers() {
         // lock needed
+        var payout = []
         for(var name of this.playersToLeave) {
             this.allPlayers.delete(name);
             var player = this.playerMap[name];
-            this.payoutPlayer(player);
+            payout.push(player);
             delete this.playerMap[name];
         }
         this.playersToLeave.clear();
@@ -252,6 +248,7 @@ class Table {
             if (player.money >= this.bigBlind)
                 this.activePlayers.push(player);
         }
+        return payout
     }
 
     reset() {

@@ -38,7 +38,8 @@ async function runGame(tableID) {
     while(true) {
         await delay(3000)
 
-        table.updateActivePlayers()
+        let payout = table.updateActivePlayers();
+        payPlayers(payout);
         
         console.log(table.getActivePlayersCt());
 
@@ -90,6 +91,19 @@ async function runGame(tableID) {
             table.concludeResults();
             await delay(6000);
         }
+    }
+}
+
+async function payPlayers(players) {
+    for (const player of players) {
+        axios
+        .post('http://accounts-node:2139/add-coins', {
+            user: player.name,
+            amount: player.money
+        })
+        .catch(function (error) {
+            console.log("error in payout");
+        }); 
     }
 }
 
@@ -146,11 +160,32 @@ io.on("connection", socket => {
             socket.emit('wrong-game-id');
             return;
         }
-        socket.join(tableID);
+        axios
+        .post('http://accounts-node:2139/get-balance', {
+            user: username
+        })
+        .then(function (response) {
+            let buyIn = Math.min(1000, response.data.balance)
+            axios
+            .post('http://accounts-node:2139/get-coins', {
+                user: username,
+                amount: buyIn
+            })
+            .then(function (response) {
+                socket.join(tableID);
 
-        tables[tableID].joinPlayer(username, socket);
-        socket.emit('name-info', username);
+                tables[tableID].joinPlayer(username, socket, buyIn);
+                socket.emit('name-info', username);
+            })
+            .catch(function (error) {
+                console.log("error get coins");
+            }); 
+        })
+        .catch(function (error) {
+            console.log("error get balance");
+        }); 
     });
+
 
     socket.on("equalize", function (tableID, authToken) {
         const username = isValidToken(authToken);

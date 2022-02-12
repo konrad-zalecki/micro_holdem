@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css')}}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
+    <title>Micro Hold'em</title>
+</head>
+<body>
+    {% include 'topbar.html' %}
+    <div id="content">
+        <div class="listing-item">
+            <div class="li-name add-friend" onclick="pop()">+ Add new friend</div>
+        </div>
+        {% for i in invites %}
+        <div class="listing-item"  listing-value="{{ i }}">
+            <div class="li-name">[INV] {{ i }}</div>
+            <div class="li-pay accept" onclick="accept('{{ i }}')">accept</div>
+            <div class="li-pay decline" onclick="decline('{{ i }}')">decline</div>
+        </div>
+        {% endfor %}
+        {% for f in friends %}
+        <div class="listing-item" listing-value="{{ f }}">
+            <div class="li-name">{{ f }}</div>
+            <div class="li-pay transfer" onclick="transfer('{{ f }}')">transfer coins</div>
+            <div class="li-del unfriend" onclick="unfriend('{{ f }}')">unfriend</div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        async function pop() {
+            nick = prompt("Enter nickname:", "");
+            if (nick == null) return;
+            const response = await fetch('api/invite', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"to": nick, "auth_token": authToken()})
+            });
+        }
+
+        // https://stackoverflow.com/questions/10730362/get-cookie-by-name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function authToken() {
+            return getCookie('auth_token');
+        }
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        async function accept_inv(name) {
+            const response = await fetch('api/accept', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"from": name, "auth_token": authToken()})
+            });
+        }
+
+        async function decline_inv(name) {
+            const response = await fetch('api/decline', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"from": name, "auth_token": authToken()})
+            });
+        }
+
+        async function unfriend_fr(name) {
+            const response = await fetch('api/unfriend', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"who": name, "auth_token": authToken()})
+            });
+        }
+
+        async function transfer_coins(name, amount) {
+            const response = await fetch('api/transfer', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"to": name, "auth_token": authToken(), "amount": amount})
+            });
+        }
+
+        async function accept(name) {
+            console.log(name)
+            matches = document.querySelectorAll('[listing-value="'+name+'"]');
+            for (i = 0; i < matches.length; ++i) {
+                matches[i].style.display = "none";
+            }
+            await accept_inv(name);
+        }
+
+        async function decline(name) {
+            console.log(name)
+            matches = document.querySelectorAll('[listing-value="'+name+'"]');
+            for (i = 0; i < matches.length; ++i) {
+                matches[i].style.display = "none";
+            }
+            await decline_inv(name);
+        }
+
+        async function unfriend(name) {
+            console.log(name)
+            matches = document.querySelectorAll('[listing-value="'+name+'"]');
+            for (i = 0; i < matches.length; ++i) {
+                matches[i].style.display = "none";
+            }
+            await unfriend_fr(name);
+        }
+
+        async function transfer(name) {
+            amount = parseInt(prompt("Amount:", ""));
+            await transfer_coins(name, amount);
+        } 
+    </script>
+</body>
+</html>

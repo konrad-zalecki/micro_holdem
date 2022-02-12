@@ -13,6 +13,15 @@ services:
       - 2137:2137
     networks:
       - holdem-network
+  front2:
+    container_name: front2-node
+    restart: always
+    build:
+      context: ./front2
+    ports:
+      - 2177:2137
+    networks:
+      - holdem-network
   game-server:
     container_name: game-node
     restart: always
@@ -112,3 +121,10 @@ services:
      - "6379:6379"
     networks:
       - holdem-network
+  nginx:
+    build: ./nginx 
+    ports:
+    - "7654:80"
+    depends_on:
+      - front
+      - front2

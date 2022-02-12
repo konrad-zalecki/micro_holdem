@@ -1,0 +1,83 @@
+* {
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+body {
+    background: url('pexels-photo-4253690.jpeg') no-repeat;
+    background-size: cover;
+    background-color: black;
+}
+
+.content-wrapper {
+    width: 80%;
+    max-width: 1200px;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    color: #fff;
+}
+
+.content-wrapper h1 {
+    font-size: 60px;
+}
+
+.login-form {
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 2rem;
+    margin-top: 1.75rem;
+    width: 80%;
+    max-width: 500px;
+    display: inline-block;
+    border-radius: 0.5rem;
+}
+
+
+.login-form input {
+    font-size: 16px;
+    width: 70%;
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0;
+    border: 0;
+    outline: none;
+    border-radius: 0.5rem;
+}
+
+.login-form button {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 1rem 0;
+    margin-bottom: 2rem;
+    padding: 1rem 1.5rem;
+    width: 50%;
+    border-radius: 0.5rem;
+    border: 0;
+}
+
+.login-form button:hover {
+    background-color: #ccc;
+    cursor: pointer;
+}
+
+.login-form p {
+    font-size: 1rem;
+}
+
+.login-form p a {
+    color: #fff;
+}
+
+.login-form p a:hover {
+    color: #ccc;
+}
+
+.login-form p.failure-info {
+    color: red;
+}
+
+.login-form p.success-info {
+    color: greenyellow;
+}
