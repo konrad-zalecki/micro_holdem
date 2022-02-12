@@ -1,7 +1,7 @@
-POST http://10.0.2.15:6969/login
+POST http://0.0.0.0:2190/add-to-history
 Content-Type: application/json
 
 {
-  "username": "wielkiprofesoruwu",
-  "password": "sznurek"
+  "user": "d",
+  "amount": -69
 }

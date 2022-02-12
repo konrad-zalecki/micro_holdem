@@ -128,3 +128,19 @@ services:
     depends_on:
       - front
       - front2
+  history:
+    container_name: history-node
+    restart: always
+    build:
+      context: ./history
+    ports:
+      - 2190:2190
+    networks:
+      - holdem-network
+  history-db:
+    container_name: history-db
+    image: mongo:latest
+    ports:
+      - '27025:27017'
+    networks:
+      - holdem-network

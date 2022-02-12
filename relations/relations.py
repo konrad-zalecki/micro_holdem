@@ -48,7 +48,6 @@ def get_invites():
     matches = col.find({"to": sender_username})
     vals = []
     for x in matches:
-        print('|||', x, file=sys.stderr)
         vals.append(x["from"])
     return jsonify(vals)
 

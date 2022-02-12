@@ -5,6 +5,7 @@ import sys
 import jwt
 from functools import wraps
 import redis
+import pickle
 
 app = Flask(__name__)
 
@@ -56,9 +57,9 @@ def get_username(request):
 
 def check_daily(name):
     if is_cached_daily(name):
-        print("no jest skaszowane", file=sys.stderr)
+        print("found daily in cache", file=sys.stderr)
         return
-    print("no nie jest skaszowane", file=sys.stderr)
+    print("no daily found in cache", file=sys.stderr)
     requests.post(
         'http://accounts-node:2139/daily',
         json={"user": name}
@@ -187,11 +188,13 @@ def register():
             'http://users-node:6969/register',
             json={'password': password, 'username': username}
         )
-        resp = requests.post(
+    if response.status_code == 200:
+        requests.post(
             'http://accounts-node:2139/create-account',
             json={'user': username})
-        print('Account creation: ', resp, file=sys.stderr)
-    if response.status_code == 200:
+        requests.post(
+            'http://history-node:2190/init-history',
+            json={'user': username})
         return render_template('register.html', succ_info="Account created")
     else:
         return render_template('register.html', fail_info="Username not available")
@@ -209,7 +212,11 @@ def logout():
 def match_history():
     user = get_username(request)
     balance = get_balance(user)
-    return render_template('history.html', act="history", bal=balance, usr=user)
+    resp = requests.post(
+            'http://history-node:2190/get-history',
+            json={"user": user}
+        )
+    return render_template('history.html', act="history", bal=balance, usr=user, his=resp.json())
 
 # @app.route('/tables')
 # @token_required
@@ -225,13 +232,25 @@ def get_transactions(user):
         )
     return response.json()
 
+def get_cached_transactions(user):
+    rc = redis.Redis(host='redis-cache', port=6379, db=2)
+    transactions = rc.get(user)
+    return None if transactions is None else pickle.loads(transactions)
+
+def set_cached_transactions(user, transactions):
+    rc = redis.Redis(host='redis-cache', port=6379, db=2)
+    rc.set(user, pickle.dumps(transactions))
+
 @app.route('/transactions')
 @token_required
 def transactions():
     user = get_username(request)
     balance = get_balance(user)
-    transactions = get_transactions(user)
-    transactions=[x["desc"] for x in transactions]
+    transactions = get_cached_transactions(user)
+    if transactions is None:
+        transactions = get_transactions(user)
+        transactions=[x["desc"] for x in transactions]
+        set_cached_transactions(user, transactions)
     return render_template('transactions.html', act="transactions", bal=balance, usr=user, tr=transactions)
 
 @app.route('/game/<num>')

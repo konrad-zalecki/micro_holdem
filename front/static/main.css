@@ -82,6 +82,34 @@ body {
     float: left;
 }
 
+.li-game-time {
+    width: 60%;
+    margin: 0;
+    float: left;
+    text-align: right;
+    padding-right: 3rem;
+}
+
+.li-change {
+    width: 20%;
+    margin: 0;
+    float: left;
+}
+
+.li-change-plus {
+    width: 25%;
+    margin: 0;
+    float: left;
+    color: #00FF00;
+}
+
+.li-change-minus {
+    width: 25%;
+    margin: 0;
+    float: left;
+    color: #FF0000;
+}
+
 .li-del {
     width: 25%;
     margin: 0;
