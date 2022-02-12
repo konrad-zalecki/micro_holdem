@@ -160,6 +160,11 @@ io.on("connection", socket => {
             socket.emit('wrong-game-id');
             return;
         }
+        if (tables[tableID].hasPlayer(username)) {
+            tables[tableID].joinPlayer(username, socket, 0);
+            return;
+        }
+
         axios
         .post('http://accounts-node:2139/get-balance', {
             user: username
@@ -295,6 +300,22 @@ app.get('/create-new-game', async (req, res) => {
     res.json(gameJson);
 });
 
+app.post('/create-private-game', async (req, res) => {
+    console.log('bomba priv giera jest tworzona tak o')
+    console.log(req.body)
+    newID = req.body.code;
+    var game = {
+        gameID: newID,
+        playersCt: 0,
+        playerNames: []
+    };
+
+    runGame(newID);
+    privateGamesIDs.push(newID);
+
+    const gameJson = JSON.stringify(game);
+    res.json(gameJson);
+});
 
 
 server.listen(PORT, function() {

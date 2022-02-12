@@ -212,6 +212,10 @@ class Table {
         this.secondsPerTurn = secondsPerTurn
     }
 
+    hasPlayer(name) {
+        return this.allPlayers.has(name);
+    }
+
     joinPlayer(name, socket, buyIn) {
         if (!this.allPlayers.has(name)) {
             var player = new Player(name, buyIn, socket);
