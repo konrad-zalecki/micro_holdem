@@ -33,7 +33,8 @@ body {
     width: 30vh;
     height: 100%;
     margin-left: 10px;
-    background-color: yellow;
+    background-color: white;
+    border: solid black 0.5mm;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -43,7 +44,8 @@ body {
     display: flex;
     width: 30vh;
     height: 100%;
-    background-color: yellow;
+    background-color: white;
+    border: solid black 0.5mm;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -72,7 +74,8 @@ body {
     display: flex;
     width: calc(50vw - 35vh);
     height: 100%;
-    background-color: yellow;
+    background-color: white;
+    border: solid black 0.5mm;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -120,6 +123,7 @@ body {
     display: flex;
     height: 50%;
     background-color: black;
+    border: solid black 0.5mm;
     justify-items: center;
     align-items: center;
 }
@@ -127,7 +131,8 @@ body {
 .time-box {
     display: flex;
     height: 50%;
-    background-color: yellow;
+    background-color: white;
+    border: solid black 0.5mm;
     justify-content: center;
     align-items: center;
     width: 10vh;

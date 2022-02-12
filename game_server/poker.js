@@ -158,10 +158,11 @@ class Player {
     constructor(name, money, socket) {
         this.name = name;
         this.money = money;
-        this.status = ''
-        this.pool = 0
-        this.hand = []
-        this.socket = socket
+        this.status = '';
+        this.pool = 0;
+        this.hand = [];
+        this.socket = socket;
+        this.buyIn = money;
     }
 
     bet(stake) {

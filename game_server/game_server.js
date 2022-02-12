@@ -32,7 +32,7 @@ var privateGamesIDs = []
 const tables = {};
 
 async function runGame(tableID) {
-    const table = new poker.Table(tableID, io, 1, 2, 15);
+    const table = new poker.Table(tableID, io, 1, 2, 29);
     tables[tableID] = table;
 
     while(true) {
@@ -103,7 +103,15 @@ async function payPlayers(players) {
         })
         .catch(function (error) {
             console.log("error in payout");
-        }); 
+        });
+        axios
+        .post('http://history-node:2190/add-to-history', {
+            user: player.name,
+            amount: player.money - player.buyIn
+        })
+        .catch(function (error) {
+            console.log("error in history");
+        });
     }
 }
 
