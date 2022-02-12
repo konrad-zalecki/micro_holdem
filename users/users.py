@@ -31,7 +31,6 @@ def register():
     client = MongoClient('mongodb://users-db:27017,users-db-2:27017/?replicaSet=rs0')
     col = client["users_database"]["users"]
     matches = col.find(query)
-    print('MATCHES', len(list(matches)), file=sys.stderr)
     if len(list(matches)) == 0:
         col.insert_one({"username": username, "password": password})
         return make_response("OK", 200)

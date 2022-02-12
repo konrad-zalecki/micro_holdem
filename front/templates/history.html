@@ -12,5 +12,20 @@
 </head>
 <body>
     {% include 'topbar.html' %}
+    <div id="content">
+    {% for record in his %}
+    <div class="listing-item">
+        <div class="li-game-time">{{ record["time"] }}</div>
+        {% if record["change"] > 0%}
+        <div class="li-change-plus">+{{ record["change"] }}</div>
+        {% elif record["change"] < 0 %}
+        <div class="li-change-minus">{{ record["change"] }}</div>
+        {% else %}
+        <div class="li-change">{{ record["change"] }}</div>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+    </div>
 </body>
 </html>

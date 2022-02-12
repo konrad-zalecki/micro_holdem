@@ -18,6 +18,13 @@ def update_balance_if_cached(key, value):
     if val is not None:
         rc.set(key, value)
 
+def update_transactions_if_cached(key, transaction):
+    rc = redis.Redis(host='redis-cache', port=6379, db=2)
+    val = rc.get(key)
+    if val is not None:
+        val.append(transaction)
+        rc.set(key, val)
+
 def get_auth_username(request):
     try:
         auth_token = request.json["auth_token"]
@@ -112,16 +119,20 @@ def get_coins_for_game():
 
 @app.route('/add-coins', methods=["POST"])
 def return_coins_after_game():
-    print('abba ojcze', file=sys.stderr)
-    print(request.json, file=sys.stderr)
     if add_amount(request.json['user'], request.json["amount"]):
         return make_response('OK', 200)
     make_response('adding balance failed', 400)
+
+def delete_cached_transactions_for_user_if_exist(user):
+    rc = redis.Redis(host='redis-cache', port=6379, db=2)
+    rc.delete(user)
 
 def save_transaction(_from, _to, amount, time):
     client = MongoClient('mongodb://accounts-db:27017')
     col = client["accounts_database"]["transactions"]
     col.insert_one({"from": _from, "to": _to, "amount": amount, "time": time})
+    delete_cached_transactions_for_user_if_exist(_from)
+    delete_cached_transactions_for_user_if_exist(_to)
 
 @app.route('/transfer', methods=["POST"])
 def transfer_coins():
@@ -132,7 +143,7 @@ def transfer_coins():
     if not succ:
         return make_response(mess, 400)
     add_amount(request.json["to"], request.json["amount"])
-    save_transaction(sender_username, request.json["to"], request.json["amount"], datetime.today().replace(microsecond=0))
+    save_transaction(sender_username, request.json["to"], request.json["amount"], datetime.now().replace(microsecond=0))
     return make_response("OK", 200)
 
 def get_user_transactions(user):
@@ -151,6 +162,8 @@ def get_user_transactions(user):
             "desc" : str(x["time"]) + " | " + str(x["amount"]) + " received from " + x["from"],
             "time": x["time"]
         })
+    trans.sort(key=lambda x: x["time"])
+    trans.reverse()
     return trans
 
 @app.route('/get-transactions', methods=["POST"])
@@ -180,7 +193,7 @@ def check_daily():
     user = request.json["user"]
     if received_daily(user):
         add_amount(user, DAILY_BONUS)
-        save_transaction('DAILY BONUS', user, DAILY_BONUS, datetime.now())
+        save_transaction('DAILY BONUS', user, DAILY_BONUS, datetime.now().replace(microsecond=0))
     set_cached_daily(user, 'Y')
     return make_response("OK", 200)
 
