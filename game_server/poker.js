@@ -181,7 +181,6 @@ class Player {
     reset() {
         this.status = 'playing'
         this.pool = 0
-        // this.hand = []
     }
 
     setStatus(status) {
@@ -237,7 +236,6 @@ class Table {
     }
 
     updateActivePlayers() {
-        // lock needed
         var payout = []
         for(var name of this.playersToLeave) {
             this.allPlayers.delete(name);
@@ -300,11 +298,9 @@ class Table {
         for (const player of this.activePlayers) {
             player.socket.emit('cards-info', player.hand);
         }
-        console.log("cards info sent");
     }
 
     sendInitialInfoToPlayers() {
-        console.log('init info')
         var players = []
         for (const player of this.activePlayers) {
             players.push({
@@ -344,10 +340,6 @@ class Table {
             "update-info", 
             updateInfoDict
         );
-
-        // const player = this.activePlayers[this.playerToMove];
-        // player.socket.emit('your-turn')
-        // console.log('update info sent')
     }
 
     sendFinalInfoToPlayers(figureMap, earningsMap) {
@@ -384,8 +376,6 @@ class Table {
     }
 
     calculateBestFigure(player) {
-        // returns [val, cards, player]
-        // return [1, 'AS', player];
         if (this.cardsOnTable.length < 5) {
             return [1, '', player];
         }
@@ -467,8 +457,6 @@ class Table {
 
         var stakePaid = 0;
         while (figures.length > 0 && stakePaid < this.stake) {
-            console.log('figures')
-            console.log(figures)
             // get all players having current best figure
             let i = 1;
             while (i < figures.length && figures[i][0] == figures[0][0])
@@ -482,8 +470,6 @@ class Table {
             curPlayers = curPlayers.sort(function(a,b) {
                 return a[0] - b[0];
             });
-            console.log('cur players:')
-            console.log(curPlayers);
 
             // pay each player
             let cur = 0;
@@ -491,7 +477,6 @@ class Table {
                 // if there is anything to win
                 if (winner[0] > stakePaid) {
                     let poolToWin = winner[0] - stakePaid;
-                    console.log(poolToWin)
                     let curPlayer = winner[1];
                     let money = 0;
                     for (const player of this.activePlayers) {
@@ -499,8 +484,6 @@ class Table {
                         if (moneyLeft > 0)
                             money += Math.min(moneyLeft, poolToWin);
                     }
-                    console.log("money:")
-                    console.log(money)
                     for (let j=cur; j<curPlayers.length; j++) {
                         let curWin = money/(curPlayers.length - cur);
                         curPlayers[j][1].win(curWin);
@@ -520,7 +503,7 @@ class Table {
             return;
         if (this.currentPlayerMoveDesc != '')
             return;
-        this.currentPlayerMoveDesc = name; // lock
+        this.currentPlayerMoveDesc = name;
         const player = this.activePlayers[this.playerToMove];
         let diff = this.stake - player.pool
 
@@ -540,7 +523,7 @@ class Table {
             return
         if (this.currentPlayerMoveDesc != '')
             return;
-        this.currentPlayerMoveDesc = name; // lock
+        this.currentPlayerMoveDesc = name;
         const player = this.activePlayers[this.playerToMove];
 
         this.currentPlayerMoveDesc += ' folded';
@@ -557,16 +540,14 @@ class Table {
 
         if (this.stake > player.pool)
             return
-        this.currentPlayerMoveDesc = name; // lock
+        this.currentPlayerMoveDesc = name;
 
         this.currentPlayerMoveDesc += ' checked';
     }
 
     playerRaise(name, stake) {
-        console.log('ok')
         if (this.activePlayers[this.playerToMove].name != name)
             return
-        console.log('lol')
         if (this.currentPlayerMoveDesc != '')
             return;
         const player = this.activePlayers[this.playerToMove];
@@ -576,7 +557,7 @@ class Table {
             return
         if (player.money < stake)
             return
-        this.currentPlayerMoveDesc = name; // lock
+        this.currentPlayerMoveDesc = name;
 
         player.bet(stake)
         this.stake = player.pool

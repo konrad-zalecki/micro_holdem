@@ -29,8 +29,6 @@ def get_cached_daily(key):
 def is_cached_daily(key):
     rc = redis.Redis(host='redis-cache', port=6379, db=1)
     val = rc.get(key)
-    print(key, file=sys.stderr)
-    print(val, file=sys.stderr)
     return val is not None
 
 def set_cached_daily(key, value):
@@ -217,13 +215,6 @@ def match_history():
             json={"user": user}
         )
     return render_template('history.html', act="history", bal=balance, usr=user, his=resp.json())
-
-# @app.route('/tables')
-# @token_required
-# def tables():
-#     user = get_username(request)
-#     balance = get_balance(user)
-#     return render_template('tables.html', act="tables", bal=balance, usr=user)
 
 def get_transactions(user):
     response = requests.post(

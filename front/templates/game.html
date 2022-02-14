@@ -160,7 +160,6 @@ $(document).ready(function() {
         token = token.slice(0, end)
 
 	socket.on('connect', function() {
-        console.log("CONNECTED", socket.connected);
         socket.emit('join-game', myTable, token);
 	});
 
@@ -184,8 +183,6 @@ $(document).ready(function() {
         $("#time").html(updateInfoDict.time)
 	});
     socket.on('decision-info', function(info) {
-        // alert('update')
-        // $("#decision").html(info);
 	});
 
     socket.on('final-info', function(activePlayers, winners) {
@@ -193,7 +190,6 @@ $(document).ready(function() {
     });
 
     socket.on('your-turn', function() {
-        // $("#messages").append('<li> YOUR TURN BYQ </li>')
     });
 
     socket.on('wrong-game-id', function() {
@@ -201,14 +197,11 @@ $(document).ready(function() {
         window.location.href = '/';
     });
 
-
-
     $('#equalizeButton').on('click', function() {
 		socket.emit('equalize', myTable, token);
 	});
 
 	$('#raiseButton').on('click', function() {
-        // alert('raise')
 		socket.emit('raise', myTable, parseInt($('#raiseVal').val(), 10), token);
 		$('#raiseVal').val('');
 	});
@@ -223,17 +216,11 @@ $(document).ready(function() {
 
     $('#leaveButton').on('click', function() {
 		socket.emit('leave', myTable, token);
-        // alert('oro');
         window.location.href = '/';
 	});
 
 });
 </script>
-<!-- <img class='card' style="width: 150px" src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
-<img class='card' style="width: 150px" src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
-<div class="hand active-hand"
-    data-hand="flow: horizontal; cards: RED_BACK,KS,QS,RED_BACK,10S,9H,RED_BACK">
-</div> -->
 <div id="table-img-pos">
     <img id="table-img" src="{{ url_for('static', filename='poker-table.png')}}">
 
@@ -281,19 +268,14 @@ $(document).ready(function() {
     </div>
     <div id="player-info-positioner">
         <div id='player1info' class="player-info-box hidden">
-            <!-- info lol -->
         </div>
         <div id='player2info' class="player-info-box hidden">
-            <!-- info lol -->
         </div>
         <div id='player3info' class="player-info-box hidden">
-            <!-- info lol -->
         </div>
         <div id='player4info' class="player-info-box hidden">
-            <!-- info lol -->
         </div>
         <div id='player5info' class="player-info-box hidden">
-            <!-- info lol -->
         </div>
     </div>
     
@@ -309,16 +291,6 @@ $(document).ready(function() {
             </div>
         </div>
         <div id="game-info" class="game-info-box">
-            <!-- <div>info</div>
-            <div>info</div>
-            <div>info</div>
-            <div class="hand hhand-small">
-                <img class='card' src='https://unpkg.com/cardsJS/dist/cards/AS.svg'>
-                <img class='card' src='https://unpkg.com/cardsJS/dist/cards/AS.svg'>
-                <img class='card' src='https://unpkg.com/cardsJS/dist/cards/AS.svg'>
-                <img class='card' src='https://unpkg.com/cardsJS/dist/cards/AS.svg'>
-                <img class='card' src='https://unpkg.com/cardsJS/dist/cards/AS.svg'>
-            </div> -->
         </div>
 
     </div>
@@ -327,10 +299,6 @@ $(document).ready(function() {
         <div id="player-info" class="info-box">
         </div>
         <div id="player-hand" class="player-box">
-            <!-- <div class="hand hhand-compact active-hand">
-                <img class='card' src="{{ url_for('static', filename='cards/AS.svg')}}">
-                <img class='card' src="{{ url_for('static', filename='cards/AD.svg')}}">
-            </div> -->
         </div>
         <div class="player-buttons-box">
             <input type="text" id="raiseVal">
@@ -339,8 +307,6 @@ $(document).ready(function() {
             <button id="foldButton">Fold</button>
             <button id="checkButton">Check</button>
             <button id="leaveButton">Leave</button>
-            <!-- <ul id="messages"></ul>
-            <div id="decision"></div> -->
         </div>
         <div id="time" class="time-box">
             -

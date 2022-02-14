@@ -17,7 +17,7 @@ services:
     container_name: front2-node
     restart: always
     build:
-      context: ./front2
+      context: ./front
     ports:
       - 2177:2137
     networks:

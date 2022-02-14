@@ -56,7 +56,6 @@ async function runGame(tableID) {
             await delay(1000)
 
             // --------------------------- pre-flop ----------------------------
-            console.log('pre-flop')
             table.deck.burnCard()
             var preFlop = table.deck.dealCards(3);
             
@@ -64,14 +63,12 @@ async function runGame(tableID) {
 
             if (table.playersLeft > 1) {
                 // --------------------------- flop ---------------------------
-                console.log('flop')
                 table.cardsOnTable = table.cardsOnTable.concat(preFlop);
                 
                 await betting(tableID);
 
                 if (table.playersLeft > 1) {
                     // --------------------------- turn ---------------------------
-                    console.log('turn')
                     table.deck.burnCard();
                     table.cardsOnTable.push(table.deck.dealCards(1)[0]);
 
@@ -79,7 +76,6 @@ async function runGame(tableID) {
 
                     if (table.playersLeft > 1) {
                         // --------------------------- river ---------------------------
-                        console.log('river')
                         table.deck.burnCard();
                         table.cardsOnTable.push(table.deck.dealCards(1)[0]);
                         
@@ -120,7 +116,7 @@ async function betting(tableID) {
 
     while(table.phaseMovesCt < table.activePlayers.length) {
         table.sendUpdateInfoToPlayers(table.secondsPerTurn+1);
-        // Może nie wysyłać jeśli gracz zfoldował? dziwnie wyglada niby
+        // maybe don't send if player folded?
         await delay(1000);
         if (table.playersLeft < 2)
             break
@@ -130,10 +126,10 @@ async function betting(tableID) {
         if (player.money != 0 && player.status != 'folded') {
             for(let i=0; i<table.secondsPerTurn*10; i++) {
                 if (i%10 == 0)
-                    table.sendUpdateInfoToPlayers(table.secondsPerTurn-i/10); // new
+                    table.sendUpdateInfoToPlayers(table.secondsPerTurn-i/10);
                 await delay(100);
 
-                console.log('sekunda masna')
+
                 if (table.currentPlayerMoveDesc != '')
                     break;
             }
@@ -212,7 +208,6 @@ io.on("connection", socket => {
     });
 
     socket.on("raise", function (tableID, stake, authToken) {
-        console.log('raise')
         const username = isValidToken(authToken);
         if (username == null) return;
         if (!publicGamesIDs.includes(tableID) && !privateGamesIDs.includes(tableID)) {
@@ -254,7 +249,6 @@ io.on("connection", socket => {
             return;
         }
 
-        console.log('leave masno ' + username);
         tables[tableID].leavePlayer(username);
     });
 })
@@ -272,13 +266,8 @@ function isValidToken(token) {
     });
 }
 
-// runGame(1);
-
-// -------------------------------------------------
-
 
 app.get('/get-ongoing-games', async (req, res) => {
-    console.log('podaję gierki')
     var gamesInfo = []
     for (id of publicGamesIDs) {
         gamesInfo.push({
@@ -293,7 +282,6 @@ app.get('/get-ongoing-games', async (req, res) => {
 
 
 app.get('/create-new-game', async (req, res) => {
-    console.log('bomba giera jest tworzona tak o')
     newID = publicGamesIDs.length + 1
     var game = {
         gameID: newID,
@@ -309,8 +297,6 @@ app.get('/create-new-game', async (req, res) => {
 });
 
 app.post('/create-private-game', async (req, res) => {
-    console.log('bomba priv giera jest tworzona tak o')
-    console.log(req.body)
     newID = req.body.code;
     var game = {
         gameID: newID,

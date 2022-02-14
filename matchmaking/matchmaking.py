@@ -44,7 +44,6 @@ def get_ongoing_games():
 @app.route('/create-private-game', methods=['POST', 'GET'])
 def create_private_game(): 
     global private_games_codes
-    print('siema eniu', file=sys.stderr)
     new_code = random.randrange(10000, 100000)
     while new_code in private_games_codes:
         new_code = random.randrange(10000, 100000)

@@ -1,7 +1,0 @@
-POST http://0.0.0.0:2190/add-to-history
-Content-Type: application/json
-
-{
-  "user": "d",
-  "amount": -69
-}

@@ -119,21 +119,6 @@ def unfriend():
     else:
         return make_response("fail", 400)
 
-@app.route('/friendlist', methods=['POST'])
-def friendlist():
-    sender_username = get_auth_username(request)
-    if not sender_username:
-        return make_response('fail', 400)
-    client = MongoClient('mongodb://relations-db:27017')
-    db=client["relations_database"]
-    col=db["friends"]
-    matches = col.find({'L': "kaktus"})
-    friends = []
-    for x in matches:
-        print(x, file=sys.stderr)
-        friends.append(x["R"])
-    return jsonify(friends)
-
 @app.route('/friendscontent', methods=['POST'])
 def friendscontent():
     sender_username = request.json["username"]
