@@ -13,6 +13,33 @@ services:
       - 2137:2137
     networks:
       - holdem-network
+  front2:
+    container_name: front2-node
+    restart: always
+    build:
+      context: ./front
+    ports:
+      - 2177:2137
+    networks:
+      - holdem-network
+  game-server:
+    container_name: game-node
+    restart: always
+    build:
+      context: ./game_server
+    ports:
+      - 5000:5000
+    networks:
+      - holdem-network
+  matchmaking:
+    container_name: matchmaking
+    restart: always
+    build:
+      context: ./matchmaking
+    ports:
+      - 4200:4200
+    networks:
+      - holdem-network
   users:
     container_name: users-node
     restart: always
@@ -25,7 +52,95 @@ services:
   users-db:
     container_name: users-db
     image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
     ports:
       - '27017:27017'
+    networks:
+      - holdem-network
+  users-db-2:
+    container_name: users-db-2
+    image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
+    ports:
+      - '27030:27017'
+    networks:
+      - holdem-network
+  users-db-3:
+    container_name: users-db-3
+    image: mongo:latest
+    command:
+      - mongod
+      - --replSet
+      - "rs0"
+    ports:
+      - '27040:27017'
+    networks:
+      - holdem-network
+  relations:
+    container_name: relations-node
+    restart: always
+    build:
+      context: ./relations
+    ports:
+      - 2138:2138
+    networks:
+      - holdem-network
+  relations-db:
+    container_name: relations-db
+    image: mongo:latest
+    ports:
+      - '27018:27017'
+    networks:
+      - holdem-network
+  accounts:
+    container_name: accounts-node
+    restart: always
+    build:
+      context: ./accounts
+    ports:
+      - 2139:2139
+    networks:
+      - holdem-network
+  accounts-db:
+    container_name: accounts-db
+    image: mongo:latest
+    ports:
+      - '27019:27017'
+    networks:
+      - holdem-network
+  redis:
+    container_name: redis-cache
+    image: "redis:alpine"
+    ports:
+     - "6379:6379"
+    networks:
+      - holdem-network
+  nginx:
+    build: ./nginx 
+    ports:
+    - "7654:80"
+    depends_on:
+      - front
+      - front2
+  history:
+    container_name: history-node
+    restart: always
+    build:
+      context: ./history
+    ports:
+      - 2190:2190
+    networks:
+      - holdem-network
+  history-db:
+    container_name: history-db
+    image: mongo:latest
+    ports:
+      - '27025:27017'
     networks:
       - holdem-network

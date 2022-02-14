@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css')}}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
+    <title>Micro Hold'em</title>
+</head>
+<body>
+    {% include 'topbar.html' %}
+    <div id="content">
+    {% for record in his %}
+    <div class="listing-item">
+        <div class="li-game-time">{{ record["time"] }}</div>
+        {% if record["change"] > 0%}
+        <div class="li-change-plus">+{{ record["change"] }}</div>
+        {% elif record["change"] < 0 %}
+        <div class="li-change-minus">{{ record["change"] }}</div>
+        {% else %}
+        <div class="li-change">{{ record["change"] }}</div>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+    </div>
+</body>
+</html>

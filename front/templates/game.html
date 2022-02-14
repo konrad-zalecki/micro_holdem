@@ -1,0 +1,318 @@
+<html>
+<head>
+<title>game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='cards.css')}}" />
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='game.css')}}" />
+<script src="https://unpkg.com/cardsJS/dist/cards.min.js" type="text/javascript"></script>
+<div id="tableNum" value={{table}} style="display: none"></div>
+</head>
+<body>
+<script type="text/javascript">
+$(document).ready(function() {
+    var myName = "";
+    var images = []
+    var myTable = parseInt(document.getElementById('tableNum').getAttribute("value"), 10);
+
+    // preloading images
+    const suits = ['S', 'C', 'D', 'H']
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+    for (const suit of suits) {
+        for (const rank of ranks) {
+            var img = new Image();
+            img.src = "https://unpkg.com/cardsJS/dist/cards/"+rank+suit+".svg";
+            images.push(img)
+        }
+    }
+
+    function generateCardsHtml(cards, compact=true, small=false) {
+        var cardsHtml = "<div class='hand"
+
+        if (compact)
+            cardsHtml += " hhand-compact active-hand"
+        if (small) {
+            cardsHtml += "hhand-small"
+        }
+            
+        cardsHtml += "'>"
+
+        for (const card of cards) {
+            c = card.rank + card.suit
+            cardsHtml += "<img class='card' src='https://unpkg.com/cardsJS/dist/cards/"+c+".svg'>"
+        }
+        cardsHtml += "</div>"
+        return cardsHtml;
+    }
+
+    function playersInfo(players) {
+        let ct = 1
+        for(const player of players) {
+            if (player.name != myName) {
+                let num = ct.toString();
+                $("#player"+num+"rev").removeClass("hidden");
+                $("#player"+num+"info").html("")
+                $("#player"+num+"info").append("<div>" + player.name + "</div>")
+                $("#player"+num+"info").append("<div>money: " + player.money.toString() + "</div>")
+                $("#player"+num+"info").append("<div>pool: " + player.pool.toString() + "</div>")
+                $("#player"+num+"info").append("<div>status: " + player.status + "</div>")
+                $("#player"+num+"info").removeClass("hidden");
+                ct += 1
+            } 
+            else {
+                $("#player-info").html("")
+                $("#player-info").append("<div>" + player.name + "</div>")
+                $("#player-info").append("<div>money: " + player.money.toString() + "</div>")
+                $("#player-info").append("<div>pool: " + player.pool.toString() + "</div>")
+                $("#player-info").append("<div>status: " + player.status + "</div>")
+            }
+        }
+    }
+
+    function playerToMoveInfo(players, playerToMove) {
+        for (let i=1; i<=5; i++) {
+            $("#player" + i.toString() + "rev").removeClass("green");
+        }
+        $("#player-hand").removeClass("green")
+
+        if (players[playerToMove].name == myName) {
+            $("#player-hand").addClass("green");
+            return;
+        }
+
+        let nm = players[playerToMove].name
+        let ct = 1;
+        for (const player of players) {
+            if (player.name != myName) {
+                if (player.name == nm) {
+                    $("#player" + ct.toString() + "rev").addClass("green");
+                    return;
+                }
+                ct += 1
+            }
+        }
+    }
+
+    function tableInfo(cardsOnTable, pool, stake) {
+        cardsHtml = generateCardsHtml(cardsOnTable, false);
+        $("#table-cards").html(cardsHtml);
+        $("#game-info").html("");
+        $("#game-info").append("<div>pool: " + pool.toString() + "</div>");
+        $("#game-info").append("<div>stake: " + stake.toString() + "</div>");
+    }
+
+    function playersInitialInfo(players) {
+        for(let i=1; i<=5; i++) {
+            let num = i.toString();
+            $("#player"+num+"rev").addClass("hidden")
+            $("#player"+num+"rev").removeClass("green")
+            $("#player"+num+"info").addClass("hidden")
+            $("#player"+num+"info").html("")
+            $("#player"+num).addClass("hidden")
+            $("#player"+num).html("")
+        }
+        $("#table-cards").html("")
+        $("#player-hand").removeClass("green")
+        playersInfo(players);
+    } 
+
+    function cardsInfo(cards) {
+        cardsHtml = generateCardsHtml(cards);
+        $("#player-hand").html(cardsHtml);
+    }
+
+    function playersFinalInfo(players, winners) {
+        let ct = 1
+        for(const player of players) {
+            if (player.name != myName) {
+                let num = ct.toString();
+                cardsHtml = generateCardsHtml(player.hand)
+                $("#player"+num+"rev").addClass("hidden");
+                $("#player"+num).html(cardsHtml);
+                $("#player"+num).removeClass("hidden");
+
+                ct += 1
+            }
+            else {
+                $("#player-hand").removeClass("green")
+            }
+        }
+
+        for (const winInfo of winners) {
+            $("#game-info").append("<div>"+winInfo.info+"</div>")
+            if (winInfo.cards.length == 5) {
+                var st = "<div class='hand hhand-small'>"
+                for (const card of winInfo.cards) {
+                    st += "<img class='card' src='https://unpkg.com/cardsJS/dist/cards/"+card+".svg'>"
+                }
+                st += "</div>"
+                $("#game-info").append(st)
+            }
+        }
+    }
+
+	var socket = io('http://localhost:5000');
+    var begin = document.cookie.indexOf('auth_token') + 11
+    var token = document.cookie.slice(begin);
+    var end = token.indexOf(' ')
+    if (end != -1)
+        token = token.slice(0, end)
+
+	socket.on('connect', function() {
+        socket.emit('join-game', myTable, token);
+	});
+
+	socket.on('init-info', function(activePlayers) {
+        playersInitialInfo(activePlayers);
+	});
+
+    socket.on('cards-info', function(cards) {
+        cardsInfo(cards);
+	});
+
+    socket.on('name-info', function(name) {
+        myName = name;
+	});
+
+    socket.on('update-info', function(updateInfoDict) {
+        const players = updateInfoDict.activePlayers;
+        tableInfo(updateInfoDict.cardsOnTable, updateInfoDict.pool, updateInfoDict.stake)
+        playersInfo(players);
+        playerToMoveInfo(players, updateInfoDict.playerToMove);
+        $("#time").html(updateInfoDict.time)
+	});
+    socket.on('decision-info', function(info) {
+	});
+
+    socket.on('final-info', function(activePlayers, winners) {
+        playersFinalInfo(activePlayers, winners)
+    });
+
+    socket.on('your-turn', function() {
+    });
+
+    socket.on('wrong-game-id', function() {
+        alert('wrong game id')
+        window.location.href = '/';
+    });
+
+    $('#equalizeButton').on('click', function() {
+		socket.emit('equalize', myTable, token);
+	});
+
+	$('#raiseButton').on('click', function() {
+		socket.emit('raise', myTable, parseInt($('#raiseVal').val(), 10), token);
+		$('#raiseVal').val('');
+	});
+
+    $('#foldButton').on('click', function() {
+		socket.emit('fold', myTable, token);
+	});
+
+    $('#checkButton').on('click', function() {
+		socket.emit('check', myTable, token);
+	});
+
+    $('#leaveButton').on('click', function() {
+		socket.emit('leave', myTable, token);
+        window.location.href = '/';
+	});
+
+});
+</script>
+<div id="table-img-pos">
+    <img id="table-img" src="{{ url_for('static', filename='poker-table.png')}}">
+
+    <div id="opponent-positioner">
+        <div id='player1rev' class="box hidden">
+            <div class="hand hhand-compact active-hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id='player2rev' class="box hidden">
+            <div class="hand hhand-compact active-hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id='player3rev' class="box hidden">
+            <div class="hand hhand-compact active-hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id='player4rev' class="box hidden">
+            <div class="hand hhand-compact active-hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id='player5rev' class="box hidden">
+            <div class="hand hhand-compact active-hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id='player1' class="box hidden">
+        </div>
+        <div id='player2' class="box hidden">
+        </div>
+        <div id='player3' class="box hidden">
+        </div>
+        <div id='player4' class="box hidden">
+        </div>
+        <div id='player5' class="box hidden">
+        </div>
+    </div>
+    <div id="player-info-positioner">
+        <div id='player1info' class="player-info-box hidden">
+        </div>
+        <div id='player2info' class="player-info-box hidden">
+        </div>
+        <div id='player3info' class="player-info-box hidden">
+        </div>
+        <div id='player4info' class="player-info-box hidden">
+        </div>
+        <div id='player5info' class="player-info-box hidden">
+        </div>
+    </div>
+    
+    <div id="table-positioner">
+        <div id="table-cards-pos"></div>
+        <div id="table-cards" class="table-cards-box">
+            <div class="hand">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+                <img class='card' src="{{ url_for('static', filename='cards/RED_BACK.svg')}}">
+            </div>
+        </div>
+        <div id="game-info" class="game-info-box">
+        </div>
+
+    </div>
+    
+    <div id="player-positioner">
+        <div id="player-info" class="info-box">
+        </div>
+        <div id="player-hand" class="player-box">
+        </div>
+        <div class="player-buttons-box">
+            <input type="text" id="raiseVal">
+            <button id="raiseButton">Raise</button>
+            <button id="equalizeButton">Equalize</button>
+            <button id="foldButton">Fold</button>
+            <button id="checkButton">Check</button>
+            <button id="leaveButton">Leave</button>
+        </div>
+        <div id="time" class="time-box">
+            -
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
